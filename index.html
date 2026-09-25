@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FITPULSE AI - Personalized Workout Generator & Tracker</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            DEFAULT: '#101820',
+                            card: '#182330',
+                            hover: '#1e2d3d',
+                            light: '#243447',
+                            border: '#2e4157'
+                        },
+                        lime: {
+                            DEFAULT: '#A3E635',
+                            hover: '#84cc16',
+                            glow: 'rgba(163, 230, 53, 0.25)',
+                            muted: 'rgba(163, 230, 53, 0.1)'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #101820;
+            color: #FFFFFF;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #101820;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2e4157;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #A3E635;
+        }
+
+        .glow-effect {
+            box-shadow: 0 0 20px rgba(163, 230, 53, 0.2);
+        }
+        .glow-effect-lg {
+            box-shadow: 0 0 35px rgba(163, 230, 53, 0.3);
+        }
+        .gradient-border {
+            border: 1px solid rgba(163, 230, 53, 0.2);
+        }
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        
+        /* Glassmorphism elements */
+        .glass-panel {
+            background: rgba(24, 35, 48, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-lime flex flex-col justify-between selection:text-navy">
+
+    <!-- Navigation / Header -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-navy-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <!-- Brand Logo -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('plan')">
+                <div class="w-11 h-11 rounded-xl bg-lime flex items-center justify-center text-navy font-black text-2xl shadow-lg shadow-lime/20">
+                    <i class="fa-solid fa-bolt-lightning"></i>
+                </div>
+                <div>
+                    <span class="text-2xl font-black tracking-tight text-white">FIT<span class="text-lime">PULSE</span></span>
+                    <span class="text-xs block text-slate-400 font-semibold tracking-wider uppercase">AI Fitness Generator</span>
+                </div>
+            </div>
+
+            <!-- Main Navigation Links -->
+            <nav class="hidden md:flex items-center space-x-1 bg-navy/60 p-1.5 rounded-xl border border-navy-border">
+                <button onclick="switchTab('profile')" id="nav-profile" class="nav-btn px-4 py-2 rounded-lg text-sm font-semibold text-slate-300 hover:text-white transition-all">
+                    <i class="fa-solid fa-user-gear mr-2"></i>Profile & Goals
+                </button>
+                <button onclick="switchTab('plan')" id="nav-plan" class="nav-btn px-4 py-2 rounded-lg text-sm font-semibold text-slate-300 hover:text-white transition-all">
+                    <i class="fa-solid fa-calendar-week mr-2"></i>Weekly Routine
+                </button>
+                <button onclick="switchTab('progress')" id="nav-progress" class="nav-btn px-4 py-2 rounded-lg text-sm font-semibold text-slate-300 hover:text-white transition-all">
+                    <i class="fa-solid fa-chart-line mr-2"></i>Progress Dashboard
+                </button>
+            </nav>
+
+            <!-- Actions & Settings -->
+            <div class="flex items-center space-x-3">
+                <button onclick="openTimerModal()" class="p-2.5 rounded-xl bg-navy-card hover:bg-navy-hover text-lime border border-navy-border transition-all flex items-center gap-2 text-sm font-bold">
+                    <i class="fa-solid fa-stopwatch text-base"></i>
+                    <span class="hidden sm:inline">Rest Timer</span>
+                </button>
+                <button onclick="openApiModal()" class="p-2.5 rounded-xl bg-navy-card hover:bg-navy-hover text-slate-300 hover:text-white border border-navy-border transition-all" title="Gemini API Settings">
+                    <i class="fa-solid fa-key"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Bar -->
+        <div class="md:hidden flex justify-around border-t border-navy-border bg-navy-card py-2 px-2">
+            <button onclick="switchTab('profile')" id="mob-nav-profile" class="flex flex-col items-center py-1 px-3 text-xs font-semibold text-slate-400">
+                <i class="fa-solid fa-user-gear text-base mb-1"></i>Profile
+            </button>
+            <button onclick="switchTab('plan')" id="mob-nav-plan" class="flex flex-col items-center py-1 px-3 text-xs font-semibold text-slate-400">
+                <i class="fa-solid fa-calendar-week text-base mb-1"></i>Schedule
+            </button>
+            <button onclick="switchTab('progress')" id="mob-nav-progress" class="flex flex-col items-center py-1 px-3 text-xs font-semibold text-slate-400">
+                <i class="fa-solid fa-chart-line text-base mb-1"></i>Progress
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
+
+        <!-- ================= TAB 1: USER PROFILE FORM ================= -->
+        <section id="tab-profile" class="tab-content hidden max-w-3xl mx-auto">
+            <div class="bg-navy-card rounded-2xl p-6 sm:p-8 border border-navy-border shadow-2xl relative overflow-hidden">
+                <div class="absolute -right-12 -top-12 w-40 h-40 bg-lime/10 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <div class="mb-8 border-b border-navy-border pb-5">
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white flex items-center gap-3">
+                        <i class="fa-solid fa-sliders text-lime"></i> Fitness Profile Setup
+                    </h2>
+                    <p class="text-slate-400 mt-2 text-sm sm:text-base">Provide your physical metrics and primary targets so our AI engine can construct your ideal weekly training routine.</p>
+                </div>
+
+                <form id="profileForm" onsubmit="handleFormSubmit(event)" class="space-y-6">
+                    <!-- Basic Body Metrics Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Age (Years)</label>
+                            <input type="number" id="inputAge" min="12" max="90" required value="26" class="w-full bg-navy border border-navy-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-lime transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Gender</label>
+                            <select id="inputGender" class="w-full bg-navy border border-navy-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-lime transition-all">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Non-Binary">Non-Binary / Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Height (cm)</label>
+                            <input type="number" id="inputHeight" min="100" max="230" required value="175" class="w-full bg-navy border border-navy-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-lime transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Weight (kg)</label>
+                            <input type="number" id="inputWeight" min="30" max="250" required value="72" class="w-full bg-navy border border-navy-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-lime transition-all">
+                        </div>
+                    </div>
+
+                    <!-- Fitness Level Selector -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">Current Fitness Level</label>
+                        <div class="grid grid-cols-3 gap-3">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="fitnessLevel" value="Beginner" class="peer hidden" checked>
+                                <div class="p-4 rounded-xl bg-navy border border-navy-border peer-checked:border-lime peer-checked:bg-lime/10 peer-checked:text-lime text-center transition-all">
+                                    <i class="fa-solid fa-seedling text-lg mb-1 block"></i>
+                                    <span class="text-sm font-bold block">Beginner</span>
+                                    <span class="text-[11px] text-slate-400 block mt-0.5">0-6 months exp</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="fitnessLevel" value="Intermediate" class="peer hidden">
+                                <div class="p-4 rounded-xl bg-navy border border-navy-border peer-checked:border-lime peer-checked:bg-lime/10 peer-checked:text-lime text-center transition-all">
+                                    <i class="fa-solid fa-dumbbell text-lg mb-1 block"></i>
+                                    <span class="text-sm font-bold block">Intermediate</span>
+                                    <span class="text-[11px] text-slate-400 block mt-0.5">1-2 years exp</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="fitnessLevel" value="Advanced" class="peer hidden">
+                                <div class="p-4 rounded-xl bg-navy border border-navy-border peer-checked:border-lime peer-checked:bg-lime/10 peer-checked:text-lime text-center transition-all">
+                                    <i class="fa-solid fa-trophy text-lg mb-1 block"></i>
+                                    <span class="text-sm font-bold block">Advanced</span>
+                                    <span class="text-[11px] text-slate-400 block mt-0.5">3+ years exp</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Primary Goal Selection -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">Primary Goal</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="fitnessGoal" value="Weight Loss" class="peer hidden" checked>
+                                <div class="p-3.5 rounded-xl bg-navy border border-navy-border peer-checked:border-lime peer-checked:bg-lime/10 peer-checked:text-lime text-center transition-all">
+                                    <i class="fa-solid fa-fire text-lg mb-1 block"></i>
+                                    <span class="text-xs font-bold block">Weight Loss</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="fitnessGoal" value="Muscle Gain" class="peer hidden">
+                                <div class="p-3.5 rounded-xl bg-navy border border-navy-border peer-checked:border-lime peer-checked:bg-lime/10 peer-checked:text-lime text-center transition-all">
+                                    <i class="fa-solid fa-child-reaching text-lg mb-1 block"></i>
+                                    <span class="text-xs font-bold block">Muscle Gain</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="fitnessGoal" value="Strength Improvement" class="peer hidden">
+                                <div class="p-3.5 rounded-xl bg-navy border border-navy-border peer-checked:border-lime peer-checked:bg-lime/10 peer-checked:text-lime text-center transition-all">
+                                    <i class="fa-solid fa-weight-hanging text-lg mb-1 block"></i>
+                                    <span class="text-xs font-bold block">Strength</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="fitnessGoal" value="General Fitness" class="peer hidden">
+                                <div class="p-3.5 rounded-xl bg-navy border border-navy-border peer-checked:border-lime peer-checked:bg-lime/10 peer-checked:text-lime text-center transition-all">
+                                    <i class="fa-solid fa-heart-pulse text-lg mb-1 block"></i>
+                                    <span class="text-xs font-bold block">Endurance</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Target Days Selection -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-xs font-bold uppercase tracking-wider text-slate-300">Workout Frequency</label>
+                            <span id="daysCountDisplay" class="text-sm font-bold text-lime">4 Days / Week</span>
+                        </div>
+                        <input type="range" id="inputDays" min="3" max="6" value="4" oninput="document.getElementById('daysCountDisplay').innerText = this.value + ' Days / Week'" class="w-full h-2 bg-navy rounded-lg appearance-none cursor-pointer accent-lime">
+                        <div class="flex justify-between text-xs text-slate-400 mt-1">
+                            <span>3 Days</span>
+                            <span>4 Days</span>
+                            <span>5 Days</span>
+                            <span>6 Days</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="generateBtn" class="w-full py-4 rounded-xl bg-lime hover:bg-lime-hover text-navy font-black text-base uppercase tracking-wider transition-all transform active:scale-95 shadow-lg shadow-lime/20 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Generate AI Training Plan
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ================= TAB 2: WEEKLY SCHEDULE & WORKOUT PLAN ================= -->
+        <section id="tab-plan" class="tab-content space-y-8">
+            <!-- Summary Banner -->
+            <div id="planHeaderBanner" class="bg-navy-card rounded-2xl p-6 border border-navy-border flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span id="badgeGoal" class="bg-lime/10 text-lime border border-lime/30 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Weight Loss</span>
+                        <span id="badgeLevel" class="bg-navy-light text-slate-300 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-navy-border">Intermediate</span>
+                    </div>
+                    <h1 id="userPlanTitle" class="text-2xl sm:text-3xl font-extrabold text-white mt-2">Custom Training Program</h1>
+                    <p id="userPlanSubtitle" class="text-slate-400 text-sm mt-1">Designed for 4 days per week based on your physiological stats.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <button onclick="exportPlanJSON()" class="px-4 py-2.5 rounded-xl bg-navy-light hover:bg-navy-border text-slate-200 text-xs font-bold border border-navy-border transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-download"></i> Export JSON
+                    </button>
+                    <button onclick="switchTab('profile')" class="px-4 py-2.5 rounded-xl bg-lime/10 hover:bg-lime/20 text-lime text-xs font-bold border border-lime/30 transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-arrows-rotate"></i> Regenerate
+                    </button>
+                </div>
+            </div>
+
+            <!-- Days Navigator Bar -->
+            <div class="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none" id="daysNavContainer">
+                <!-- Dynamically Populated Day Tabs -->
+            </div>
+
+            <!-- Active Day Workout Detail Card -->
+            <div id="activeDayCard" class="bg-navy-card rounded-2xl p-6 sm:p-8 border border-navy-border shadow-2xl space-y-6">
+                <!-- Day Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-navy-border pb-6">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-widest text-lime mb-1" id="activeDayName">Monday</div>
+                        <h2 class="text-2xl font-black text-white" id="activeDayFocus">Upper Body Strength</h2>
+                        <p class="text-slate-400 text-sm mt-1" id="activeDayDesc">Focusing on chest, back, and arm hypertrophy.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="text-right hidden sm:block">
+                            <span class="text-xs text-slate-400 block font-semibold">Day Status</span>
+                            <span id="activeDayStatusText" class="text-xs font-bold text-slate-300">Pending</span>
+                        </div>
+                        <button id="toggleCompleteDayBtn" onclick="toggleActiveDayCompletion()" class="px-5 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2 border">
+                            <i class="fa-regular fa-circle-check text-lg"></i>
+                            <span>Mark Day Complete</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Exercise List Grid -->
+                <div class="space-y-4" id="exerciseListContainer">
+                    <!-- Dynamic Exercises injected here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 3: PROGRESS DASHBOARD ================= -->
+        <section id="tab-progress" class="tab-content hidden space-y-8">
+            <!-- Top Metric Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div class="bg-navy-card p-6 rounded-2xl border border-navy-border relative overflow-hidden">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Completion Rate</span>
+                        <div class="w-10 h-10 rounded-xl bg-lime/10 text-lime flex items-center justify-center"><i class="fa-solid fa-chart-pie"></i></div>
+                    </div>
+                    <div class="text-3xl font-black text-white mt-3" id="statCompletionPercent">0%</div>
+                    <p class="text-xs text-slate-400 mt-1" id="statCompletedFraction">0 of 0 sessions done</p>
+                    <div class="w-full bg-navy rounded-full h-1.5 mt-3 overflow-hidden">
+                        <div id="statProgressBar" class="bg-lime h-full w-0 transition-all duration-500"></div>
+                    </div>
+                </div>
+
+                <div class="bg-navy-card p-6 rounded-2xl border border-navy-border">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Current Streak</span>
+                        <div class="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center"><i class="fa-solid fa-fire"></i></div>
+                    </div>
+                    <div class="text-3xl font-black text-white mt-3" id="statStreak">0 Days</div>
+                    <p class="text-xs text-slate-400 mt-1">Consistency is key!</p>
+                </div>
+
+                <div class="bg-navy-card p-6 rounded-2xl border border-navy-border">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Exercises Done</span>
+                        <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center"><i class="fa-solid fa-check-double"></i></div>
+                    </div>
+                    <div class="text-3xl font-black text-white mt-3" id="statTotalExercises">0</div>
+                    <p class="text-xs text-slate-400 mt-1">Sets completed</p>
+                </div>
+
+                <div class="bg-navy-card p-6 rounded-2xl border border-navy-border">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Est. Calories Burned</span>
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center"><i class="fa-solid fa-bolt"></i></div>
+                    </div>
+                    <div class="text-3xl font-black text-white mt-3" id="statCalories">0 kcal</div>
+                    <p class="text-xs text-slate-400 mt-1">Based on workout volume</p>
+                </div>
+            </div>
+
+            <!-- Weekly Progress Overview Chart/Grid -->
+            <div class="bg-navy-card rounded-2xl p-6 sm:p-8 border border-navy-border space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-check text-lime"></i> Weekly Status Log
+                    </h3>
+                    <button onclick="resetWeeklyProgress()" class="text-xs font-bold text-rose-400 hover:text-rose-300 transition-all flex items-center gap-1">
+                        <i class="fa-solid fa-rotate-left"></i> Reset Weekly Log
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3" id="weeklyProgressLogGrid">
+                    <!-- Dynamic Log Badges -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- REST TIMER MODAL WIDGET -->
+    <div id="timerModal" class="fixed inset-0 z-50 bg-navy/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-navy-card border border-navy-border rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl relative">
+            <button onclick="closeTimerModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="text-lg font-bold text-white mb-1"><i class="fa-solid fa-stopwatch text-lime mr-2"></i>Workout Rest Timer</h3>
+            <p class="text-xs text-slate-400 mb-6">Take time to recover between heavy sets</p>
+
+            <!-- Circular Progress Countdown -->
+            <div class="relative w-48 h-48 mx-auto mb-6 flex items-center justify-center">
+                <svg class="w-full h-full" viewBox="0 0 100 100">
+                    <circle class="text-navy-light" stroke-width="8" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"/>
+                    <circle id="timerRing" class="text-lime progress-ring-circle" stroke-width="8" stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" stroke-dasharray="251.2" stroke-dashoffset="0"/>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <span id="timerDisplay" class="text-4xl font-black text-white tracking-wider">01:00</span>
+                    <span id="timerStatus" class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Ready</span>
+                </div>
+            </div>
+
+            <!-- Quick Preset Buttons -->
+            <div class="grid grid-cols-4 gap-2 mb-6">
+                <button onclick="setTimerSeconds(30)" class="py-2 bg-navy border border-navy-border hover:border-lime rounded-xl text-xs font-bold text-slate-200">30s</button>
+                <button onclick="setTimerSeconds(60)" class="py-2 bg-navy border border-navy-border hover:border-lime rounded-xl text-xs font-bold text-slate-200">60s</button>
+                <button onclick="setTimerSeconds(90)" class="py-2 bg-navy border border-navy-border hover:border-lime rounded-xl text-xs font-bold text-slate-200">90s</button>
+                <button onclick="setTimerSeconds(120)" class="py-2 bg-navy border border-navy-border hover:border-lime rounded-xl text-xs font-bold text-slate-200">2m</button>
+            </div>
+
+            <!-- Timer Controls -->
+            <div class="flex items-center space-x-3">
+                <button id="startTimerBtn" onclick="toggleTimer()" class="flex-1 py-3 bg-lime hover:bg-lime-hover text-navy font-extrabold rounded-xl text-sm transition-all">Start Rest</button>
+                <button onclick="resetTimer()" class="py-3 px-4 bg-navy-light hover:bg-navy-border text-slate-300 font-bold rounded-xl text-sm border border-navy-border">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GEMINI API SETTINGS MODAL -->
+    <div id="apiModal" class="fixed inset-0 z-50 bg-navy/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-navy-card border border-navy-border rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative">
+            <button onclick="closeApiModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-lime/10 text-lime flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-brain"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white">AI Engine Configuration</h3>
+                    <p class="text-xs text-slate-400">Optional API Key Integration</p>
+                </div>
+            </div>
+            
+            <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                FitPulse features an offline algorithmic workout engine by default. If you enter your own Gemini API key below, the application will use Google Gemini 2.5 Flash for fully customized dynamic AI generations!
+            </p>
+
+            <div class="mb-5">
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Gemini API Key</label>
+                <input type="password" id="inputApiKey" placeholder="AIzaSy..." class="w-full bg-navy border border-navy-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-lime text-sm">
+            </div>
+
+            <div class="flex items-center justify-end space-x-3">
+                <button onclick="saveApiKey()" class="w-full py-3 bg-lime hover:bg-lime-hover text-navy font-bold rounded-xl text-sm transition-all">
+                    Save Key & Preferences
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-navy-border py-6 bg-navy text-center text-xs text-slate-500">
+        <p>© 2026 FITPULSE AI - Personal Workout Engine. Designed with dark navy & energetic lime green.</p>
+    </footer>
+
+    <script>
+        // ================= APPLICATION STATE =================
+        const APP_STORAGE_KEY = 'fitpulse_app_state_v1';
+        
+        let appState = {
+            profile: {
+                age: 26,
+                gender: 'Male',
+                height: 175,
+                weight: 72,
+                level: 'Beginner',
+                goal: 'Weight Loss',
+                daysPerWeek: 4
+            },
+            apiKey: '',
+            activeDayIndex: 0,
+            weeklySchedule: [], // Array of 7 days
+            completedDays: [], // Indices of completed days
+            completedExercises: {} // key: "dayIndex-exIndex", val: boolean
+        };
+
+        // ================= BUILT-IN AI GENERATION DATABASE =================
+        const EXERCISE_DATABASE = {
+            chest: [
+                { name: "Barbell Bench Press", tips: "Keep shoulders down and back, arch lower back slightly, drive feet into ground." },
+                { name: "Incline Dumbbell Press", tips: "Set bench to 30 degrees, press dumbbells overhead in a smooth arc." },
+                { name: "Push-ups", tips: "Maintain rigid plank posture, lower chest until elbows reach 90 degrees." },
+                { name: "Cable Chest Flyes", tips: "Slight bend in elbows, squeeze chest hard at peak contraction." }
+            ],
+            back: [
+                { name: "Lat Pulldown", tips: "Pull handle toward upper chest while driving elbows straight down." },
+                { name: "Bent-Over Barbell Row", tips: "Hinge hips at 45 degrees, pull bar to navel keeping core tight." },
+                { name: "Seated Cable Row", tips: "Avoid leaning excessively, squeeze shoulder blades together." },
+                { name: "Single-Arm Dumbbell Row", tips: "Keep back parallel to floor, row dumbbell towards hip crease." }
+            ],
+            legs: [
+                { name: "Barbell Back Squat", tips: "Keep chest up, knees tracking over toes, descend to parallel." },
+                { name: "Romanian Deadlift", tips: "Hinge at hips, push glutes back until hamstring stretch is felt." },
+                { name: "Walking Lunges", tips: "Take balanced strides, lower rear knee softly toward ground." },
+                { name: "Leg Press", tips: "Place feet shoulder-width, lower sled without lifting lower back." },
+                { name: "Calf Raises", tips: "Pause for 1 second at full extension and deep stretch." }
+            ],
+            shoulders: [
+                { name: "Overhead Dumbbell Press", tips: "Press weights vertically without excessive back arching." },
+                { name: "Dumbbell Lateral Raises", tips: "Lead with elbows, raise weights to shoulder height." },
+                { name: "Face Pulls", tips: "Pull rope to forehead level, rotating shoulders externally." }
+            ],
+            arms: [
+                { name: "Dumbbell Bicep Curls", tips: "Keep elbows pinned to sides, avoid swinging momentum." },
+                { name: "Triceps Rope Pushdown", tips: "Extend arms completely, spreading rope handles at bottom." },
+                { name: "Hammer Curls", tips: "Neutral grip targets brachialis for arm thickness." }
+            ],
+            core: [
+                { name: "Hanging Leg Raises", tips: "Control movement without swinging, curl pelvis upward." },
+                { name: "Plank Hold", tips: "Engage glutes and brace core, maintaining flat spine." },
+                { name: "Ab Wheel Rollouts", tips: "Keep lower back rounded, extend out as far as core allows." }
+            ],
+            cardio: [
+                { name: "HIIT Treadmill Sprints", tips: "Alternate 30s sprint with 30s walking recovery." },
+                { name: "Jump Rope Intervals", tips: "Light on toes, turn rope using wrist movement." },
+                { name: "Rowing Machine Sprints", tips: "Drive with legs first, then lean back and pull handle." }
+            ]
+        };
+
+        // ================= INIT & EVENT LISTENERS =================
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSavedState();
+            if (!appState.weeklySchedule || appState.weeklySchedule.length === 0) {
+                generateBuiltInPlan();
+            }
+            renderAll();
+        });
+
+        function loadSavedState() {
+            const data = localStorage.getItem(APP_STORAGE_KEY);
+            if (data) {
+                try {
+                    const parsed = JSON.parse(data);
+                    appState = { ...appState, ...parsed };
+                    // Populate Form fields
+                    document.getElementById('inputAge').value = appState.profile.age;
+                    document.getElementById('inputGender').value = appState.profile.gender;
+                    document.getElementById('inputHeight').value = appState.profile.height;
+                    document.getElementById('inputWeight').value = appState.profile.weight;
+                    document.getElementById('inputDays').value = appState.profile.daysPerWeek;
+                    document.getElementById('daysCountDisplay').innerText = appState.profile.daysPerWeek + ' Days / Week';
+                    
+                    if (appState.apiKey) {
+                        document.getElementById('inputApiKey').value = appState.apiKey;
+                    }
+
+                    // Radio selections
+                    const levelRadio = document.querySelector(`input[name="fitnessLevel"][value="${appState.profile.level}"]`);
+                    if (levelRadio) levelRadio.checked = true;
+
+                    const goalRadio = document.querySelector(`input[name="fitnessGoal"][value="${appState.profile.goal}"]`);
+                    if (goalRadio) goalRadio.checked = true;
+
+                } catch (e) {
+                    console.error("Failed to load local storage state", e);
+                }
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(appState));
+        }
+
+        // ================= TAB NAVIGATION =================
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+            // Nav button styling
+            const navs = ['profile', 'plan', 'progress'];
+            navs.forEach(n => {
+                const desktopBtn = document.getElementById(`nav-${n}`);
+                const mobBtn = document.getElementById(`mob-nav-${n}`);
+                if (n === tabName) {
+                    desktopBtn?.classList.add('bg-lime', 'text-navy', 'shadow-md');
+                    desktopBtn?.classList.remove('text-slate-300');
+                    mobBtn?.classList.add('text-lime');
+                    mobBtn?.classList.remove('text-slate-400');
+                } else {
+                    desktopBtn?.classList.remove('bg-lime', 'text-navy', 'shadow-md');
+                    desktopBtn?.classList.add('text-slate-300');
+                    mobBtn?.classList.remove('text-lime');
+                    mobBtn?.classList.add('text-slate-400');
+                }
+            });
+        }
+
+        // ================= RENDER FUNCTIONS =================
+        function renderAll() {
+            renderHeaderBanner();
+            renderDaysNav();
+            renderActiveDayWorkout();
+            renderProgressStats();
+            renderWeeklyLogGrid();
+        }
+
+        function renderHeaderBanner() {
+            document.getElementById('badgeGoal').innerText = appState.profile.goal;
+            document.getElementById('badgeLevel').innerText = appState.profile.level;
+            document.getElementById('userPlanTitle').innerText = `${appState.profile.goal} Routine`;
+            document.getElementById('userPlanSubtitle').innerText = `${appState.profile.daysPerWeek} Active Days/Week • ${appState.profile.level} Intensity`;
+        }
+
+        function renderDaysNav() {
+            const container = document.getElementById('daysNavContainer');
+            container.innerHTML = '';
+
+            const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+            appState.weeklySchedule.forEach((dayData, idx) => {
+                const isCompleted = appState.completedDays.includes(idx);
+                const isActive = idx === appState.activeDayIndex;
+
+                const btn = document.createElement('button');
+                btn.onclick = () => { appState.activeDayIndex = idx; renderAll(); };
+
+                let bgClasses = 'bg-navy-card text-slate-300 border-navy-border hover:bg-navy-hover';
+                if (isActive) {
+                    bgClasses = 'bg-lime text-navy border-lime font-black shadow-lg shadow-lime/20';
+                }
+
+                btn.className = `flex-1 min-w-[90px] py-3 px-3 rounded-xl border flex flex-col items-center justify-center transition-all ${bgClasses}`;
+
+                btn.innerHTML = `
+                    <span class="text-[10px] uppercase font-bold tracking-wider opacity-80">${dayNames[idx]}</span>
+                    <span class="text-xs font-bold mt-0.5 truncate max-w-[80px]">${dayData.isRest ? 'Rest' : dayData.focus}</span>
+                    ${isCompleted ? '<i class="fa-solid fa-circle-check text-xs mt-1 text-emerald-400"></i>' : ''}
+                `;
+
+                container.appendChild(btn);
+            });
+        }
+
+        function renderActiveDayWorkout() {
+            const dayData = appState.weeklySchedule[appState.activeDayIndex] || { day: 'Day', focus: 'Rest', isRest: true, exercises: [] };
+            
+            document.getElementById('activeDayName').innerText = dayData.day;
+            document.getElementById('activeDayFocus').innerText = dayData.focus;
+            document.getElementById('activeDayDesc').innerText = dayData.description || 'Follow instructions and maintain proper posture.';
+
+            const isDayCompleted = appState.completedDays.includes(appState.activeDayIndex);
+            const statusText = document.getElementById('activeDayStatusText');
+            const toggleBtn = document.getElementById('toggleCompleteDayBtn');
+
+            if (isDayCompleted) {
+                statusText.innerText = 'Completed';
+                statusText.className = 'text-xs font-bold text-lime';
+                toggleBtn.className = 'px-5 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2 bg-lime/10 text-lime border-lime/30';
+                toggleBtn.innerHTML = `<i class="fa-solid fa-circle-check text-lg"></i> Completed`;
+            } else {
+                statusText.innerText = 'Pending';
+                statusText.className = 'text-xs font-bold text-slate-400';
+                toggleBtn.className = 'px-5 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2 bg-navy-light text-slate-200 border-navy-border hover:border-lime';
+                toggleBtn.innerHTML = `<i class="fa-regular fa-circle-check text-lg"></i> Mark Day Complete`;
+            }
+
+            const exContainer = document.getElementById('exerciseListContainer');
+            exContainer.innerHTML = '';
+
+            if (dayData.isRest) {
+                exContainer.innerHTML = `
+                    <div class="text-center py-12 bg-navy/40 rounded-2xl border border-dashed border-navy-border">
+                        <div class="w-16 h-16 rounded-full bg-navy-light text-lime flex items-center justify-center text-2xl mx-auto mb-3">
+                            <i class="fa-solid fa-bed"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-white">Active Recovery Day</h4>
+                        <p class="text-slate-400 text-sm mt-1 max-w-md mx-auto">Rest is crucial for muscle repair and neural recovery. Perform light stretching, stay hydrated, and get adequate sleep.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            dayData.exercises.forEach((ex, exIdx) => {
+                const exKey = `${appState.activeDayIndex}-${exIdx}`;
+                const isExChecked = !!appState.completedExercises[exKey];
+
+                const card = document.createElement('div');
+                card.className = `p-5 rounded-2xl border transition-all ${isExChecked ? 'bg-navy/50 border-emerald-500/30' : 'bg-navy border-navy-border hover:border-lime/40'}`;
+
+                card.innerHTML = `
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex items-start gap-4">
+                            <button onclick="toggleExerciseCheck('${exKey}')" class="mt-1 w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${isExChecked ? 'bg-lime border-lime text-navy' : 'border-slate-500 text-transparent hover:border-lime'}">
+                                <i class="fa-solid fa-check text-xs font-black"></i>
+                            </button>
+                            <div>
+                                <h4 class="text-base font-bold text-white flex items-center gap-2 ${isExChecked ? 'line-through text-slate-400' : ''}">
+                                    ${ex.name}
+                                </h4>
+                                <div class="flex flex-wrap items-center gap-2 mt-1">
+                                    <span class="text-xs bg-navy-light text-lime font-semibold px-2.5 py-0.5 rounded-md border border-navy-border">${ex.sets} Sets</span>
+                                    <span class="text-xs bg-navy-light text-slate-300 font-semibold px-2.5 py-0.5 rounded-md border border-navy-border">${ex.reps}</span>
+                                    <span class="text-xs bg-navy-light text-slate-400 font-semibold px-2.5 py-0.5 rounded-md border border-navy-border"><i class="fa-regular fa-clock mr-1"></i>${ex.rest} Rest</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="quickStartTimer('${ex.rest}')" class="self-start sm:self-center px-3 py-1.5 rounded-xl bg-navy-light hover:bg-navy-border text-slate-300 hover:text-white text-xs font-bold border border-navy-border transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-stopwatch text-lime"></i> Timer
+                        </button>
+                    </div>
+                    ${ex.tips ? `
+                        <div class="mt-3 pt-3 border-t border-navy-border/50 text-xs text-slate-400 flex items-start gap-2">
+                            <i class="fa-solid fa-lightbulb text-lime mt-0.5"></i>
+                            <span><strong>Form Tip:</strong> ${ex.tips}</span>
+                        </div>
+                    ` : ''}
+                `;
+
+                exContainer.appendChild(card);
+            });
+        }
+
+        // ================= PROGRESS & STATS LOGIC =================
+        function renderProgressStats() {
+            const totalWorkoutDays = appState.weeklySchedule.filter(d => !d.isRest).length;
+            const completedCount = appState.completedDays.length;
+            const percent = totalWorkoutDays > 0 ? Math.round((completedCount / totalWorkoutDays) * 100) : 0;
+
+            document.getElementById('statCompletionPercent').innerText = `${percent}%`;
+            document.getElementById('statCompletedFraction').innerText = `${completedCount} of ${totalWorkoutDays} workouts completed`;
+            document.getElementById('statProgressBar').style.width = `${percent}%`;
+
+            // Total exercises checked count
+            const checkedExCount = Object.values(appState.completedExercises).filter(Boolean).length;
+            document.getElementById('statTotalExercises').innerText = checkedExCount;
+
+            // Streak & Calories Calculation
+            document.getElementById('statStreak').innerText = `${completedCount} Days`;
+            document.getElementById('statCalories').innerText = `${completedCount * 380 + checkedExCount * 25} kcal`;
+        }
+
+        function renderWeeklyLogGrid() {
+            const grid = document.getElementById('weeklyProgressLogGrid');
+            grid.innerHTML = '';
+
+            const dayLabels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+            appState.weeklySchedule.forEach((dayData, idx) => {
+                const isCompleted = appState.completedDays.includes(idx);
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-xl border flex flex-col items-center text-center ${isCompleted ? 'bg-lime/10 border-lime/30 text-lime' : 'bg-navy border-navy-border text-slate-400'}`;
+
+                card.innerHTML = `
+                    <span class="text-[10px] uppercase font-extrabold tracking-wider opacity-70">${dayLabels[idx]}</span>
+                    <span class="text-xs font-bold mt-1 text-white truncate max-w-full">${dayData.focus}</span>
+                    <i class="fa-solid ${isCompleted ? 'fa-circle-check text-lime' : 'fa-circle-notch text-slate-600'} text-lg mt-3"></i>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleActiveDayCompletion() {
+            const idx = appState.activeDayIndex;
+            const pos = appState.completedDays.indexOf(idx);
+            if (pos > -1) {
+                appState.completedDays.splice(pos, 1);
+            } else {
+                appState.completedDays.push(idx);
+            }
+            saveState();
+            renderAll();
+        }
+
+        function toggleExerciseCheck(key) {
+            appState.completedExercises[key] = !appState.completedExercises[key];
+            saveState();
+            renderAll();
+        }
+
+        function resetWeeklyProgress() {
+            if (confirm("Reset all workout completions for the week?")) {
+                appState.completedDays = [];
+                appState.completedExercises = {};
+                saveState();
+                renderAll();
+            }
+        }
+
+        // ================= AI WORKOUT GENERATION ENGINE =================
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Generating Routine...`;
+
+            // Capture profile
+            appState.profile.age = parseInt(document.getElementById('inputAge').value) || 25;
+            appState.profile.gender = document.getElementById('inputGender').value;
+            appState.profile.height = parseInt(document.getElementById('inputHeight').value) || 170;
+            appState.profile.weight = parseInt(document.getElementById('inputWeight').value) || 70;
+            appState.profile.daysPerWeek = parseInt(document.getElementById('inputDays').value) || 4;
+
+            const levelEl = document.querySelector('input[name="fitnessLevel"]:checked');
+            if (levelEl) appState.profile.level = levelEl.value;
+
+            const goalEl = document.querySelector('input[name="fitnessGoal"]:checked');
+            if (goalEl) appState.profile.goal = goalEl.value;
+
+            try {
+                if (appState.apiKey && appState.apiKey.trim() !== '') {
+                    await generateGeminiPlan();
+                } else {
+                    generateBuiltInPlan();
+                }
+            } catch (err) {
+                console.warn("API generation failed, falling back to built-in generator", err);
+                generateBuiltInPlan();
+            }
+
+            // Reset completed flags for new plan
+            appState.completedDays = [];
+            appState.completedExercises = {};
+            appState.activeDayIndex = 0;
+
+            saveState();
+            renderAll();
+            switchTab('plan');
+
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Generate AI Training Plan`;
+        }
+
+        // Offline / Algorithmic Generator
+        function generateBuiltInPlan() {
+            const { daysPerWeek, level, goal } = appState.profile;
+
+            // Reps & Sets configuration based on Goal & Level
+            let repRange = "8-12 reps";
+            let setNum = "3";
+            let restTime = "60s";
+
+            if (goal === "Strength Improvement") {
+                repRange = "4-6 reps";
+                setNum = level === "Advanced" ? "5" : "4";
+                restTime = "90s";
+            } else if (goal === "Weight Loss") {
+                repRange = "12-15 reps";
+                setNum = "3";
+                restTime = "45s";
+            } else if (goal === "Muscle Gain") {
+                repRange = "8-12 reps";
+                setNum = level === "Beginner" ? "3" : "4";
+                restTime = "60s";
+            }
+
+            // Days split builder
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            const newSchedule = [];
+
+            if (daysPerWeek === 3) {
+                // Full Body split (Mon, Wed, Fri)
+                const splits = [
+                    { isRest: false, focus: "Full Body A", desc: "Chest, Legs, and Core compound movements." },
+                    { isRest: true, focus: "Rest & Recovery", desc: "Light walking or mobility work." },
+                    { isRest: false, focus: "Full Body B", desc: "Back, Shoulders, and Arm hypertrophy." },
+                    { isRest: true, focus: "Rest & Recovery", desc: "Hydrate and stretch." },
+                    { isRest: false, focus: "Full Body C", desc: "Legs, Back, and Endurance circuit." },
+                    { isRest: true, focus: "Rest & Recovery", desc: "Complete rest day." },
+                    { isRest: true, focus: "Rest & Recovery", desc: "Prepare for upcoming week." }
+                ];
+
+                splits.forEach((s, idx) => {
+                    newSchedule.push({
+                        day: days[idx],
+                        focus: s.focus,
+                        isRest: s.isRest,
+                        description: s.desc,
+                        exercises: s.isRest ? [] : [
+                            { ...getRandomEx('chest'), sets: setNum, reps: repRange, rest: restTime },
+                            { ...getRandomEx('back'), sets: setNum, reps: repRange, rest: restTime },
+                            { ...getRandomEx('legs'), sets: setNum, reps: repRange, rest: restTime },
+                            { ...getRandomEx('core'), sets: "3", reps: "15 reps", rest: "30s" }
+                        ]
+                    });
+                });
+            } else if (daysPerWeek === 4) {
+                // Upper / Lower Split (Mon, Tue, Thu, Fri)
+                const splits = [
+                    { isRest: false, focus: "Upper Body Power", categories: ['chest', 'back', 'shoulders'] },
+                    { isRest: false, focus: "Lower Body & Core", categories: ['legs', 'core'] },
+                    { isRest: true, focus: "Active Recovery", categories: [] },
+                    { isRest: false, focus: "Upper Body Hypertrophy", categories: ['chest', 'back', 'arms'] },
+                    { isRest: false, focus: "Lower Body & Cardio", categories: ['legs', 'cardio'] },
+                    { isRest: true, focus: "Rest Day", categories: [] },
+                    { isRest: true, focus: "Rest Day", categories: [] }
+                ];
+
+                splits.forEach((s, idx) => {
+                    const exList = [];
+                    s.categories.forEach(cat => {
+                        exList.push({ ...getRandomEx(cat), sets: setNum, reps: repRange, rest: restTime });
+                    });
+                    newSchedule.push({
+                        day: days[idx],
+                        focus: s.focus,
+                        isRest: s.isRest,
+                        description: `Targeting specific muscle groups with ideal rest ratios.`,
+                        exercises: exList
+                    });
+                });
+            } else {
+                // 5 or 6 Day Push/Pull/Legs split
+                const splits = [
+                    { isRest: false, focus: "Push (Chest/Shoulders/Triceps)", categories: ['chest', 'shoulders', 'arms'] },
+                    { isRest: false, focus: "Pull (Back/Biceps)", categories: ['back', 'arms'] },
+                    { isRest: false, focus: "Legs & Abs", categories: ['legs', 'core'] },
+                    { isRest: daysPerWeek < 6, focus: daysPerWeek < 6 ? "Rest" : "Push Focus", categories: ['chest', 'shoulders'] },
+                    { isRest: false, focus: "Pull Focus", categories: ['back', 'arms'] },
+                    { isRest: false, focus: "Legs & Conditioning", categories: ['legs', 'cardio'] },
+                    { isRest: true, focus: "Rest & Sleep", categories: [] }
+                ];
+
+                splits.forEach((s, idx) => {
+                    const exList = [];
+                    s.categories.forEach(cat => {
+                        exList.push({ ...getRandomEx(cat), sets: setNum, reps: repRange, rest: restTime });
+                    });
+                    newSchedule.push({
+                        day: days[idx],
+                        focus: s.focus,
+                        isRest: s.isRest,
+                        description: `High volume targeted muscle isolation routine.`,
+                        exercises: exList
+                    });
+                });
+            }
+
+            appState.weeklySchedule = newSchedule;
+        }
+
+        function getRandomEx(category) {
+            const list = EXERCISE_DATABASE[category] || EXERCISE_DATABASE.chest;
+            return list[Math.floor(Math.random() * list.length)];
+        }
+
+        // Optional Gemini API Plan Generator
+        async function generateGeminiPlan() {
+            const prompt = `Create a 7-day weekly workout schedule for a ${appState.profile.age} year old ${appState.profile.gender}, height ${appState.profile.height}cm, weight ${appState.profile.weight}kg, fitness level ${appState.profile.level}, primary goal: ${appState.profile.goal}, training ${appState.profile.daysPerWeek} days/week.
+            Respond strictly in valid JSON format matching this schema:
+            {
+              "weeklySchedule": [
+                {
+                  "day": "Monday",
+                  "focus": "Focus Title",
+                  "isRest": false,
+                  "description": "Short summary",
+                  "exercises": [
+                    { "name": "Exercise Name", "sets": "3", "reps": "10-12", "rest": "60s", "tips": "Form tip" }
+                  ]
+                }
+              ]
+            }`;
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${appState.apiKey}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                })
+            });
+
+            if (!response.ok) throw new Error("API call failed");
+
+            const data = await response.json();
+            const jsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (jsonText) {
+                const parsed = JSON.parse(jsonText);
+                if (parsed.weeklySchedule && Array.isArray(parsed.weeklySchedule)) {
+                    appState.weeklySchedule = parsed.weeklySchedule;
+                }
+            }
+        }
+
+        // ================= REST TIMER ENGINE =================
+        let timerInterval = null;
+        let timerTotalSeconds = 60;
+        let timerRemainingSeconds = 60;
+        let isTimerRunning = false;
+
+        function openTimerModal() {
+            document.getElementById('timerModal').classList.remove('hidden');
+        }
+
+        function closeTimerModal() {
+            document.getElementById('timerModal').classList.add('hidden');
+        }
+
+        function quickStartTimer(restString) {
+            let secs = 60;
+            if (restString.includes('30')) secs = 30;
+            else if (restString.includes('45')) secs = 45;
+            else if (restString.includes('90')) secs = 90;
+            else if (restString.includes('2m')) secs = 120;
+
+            setTimerSeconds(secs);
+            openTimerModal();
+            startTimer();
+        }
+
+        function setTimerSeconds(secs) {
+            stopTimer();
+            timerTotalSeconds = secs;
+            timerRemainingSeconds = secs;
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timerRemainingSeconds / 60);
+            const s = timerRemainingSeconds % 60;
+            document.getElementById('timerDisplay').innerText = 
+                `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+            // Ring progress
+            const ring = document.getElementById('timerRing');
+            const circumference = 2 * Math.PI * 40; // r=40 -> ~251.2
+            const progress = timerRemainingSeconds / timerTotalSeconds;
+            const offset = circumference - (progress * circumference);
+            ring.style.strokeDashoffset = offset;
+        }
+
+        function toggleTimer() {
+            if (isTimerRunning) {
+                stopTimer();
+            } else {
+                startTimer();
+            }
+        }
+
+        function startTimer() {
+            if (timerRemainingSeconds <= 0) timerRemainingSeconds = timerTotalSeconds;
+            isTimerRunning = true;
+            document.getElementById('startTimerBtn').innerText = 'Pause Rest';
+            document.getElementById('startTimerBtn').classList.replace('bg-lime', 'bg-amber-400');
+            document.getElementById('timerStatus').innerText = 'Counting Down';
+
+            timerInterval = setInterval(() => {
+                timerRemainingSeconds--;
+                updateTimerDisplay();
+
+                if (timerRemainingSeconds <= 0) {
+                    stopTimer();
+                    playTimerBeep();
+                    document.getElementById('timerStatus').innerText = 'Rest Complete!';
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            isTimerRunning = false;
+            clearInterval(timerInterval);
+            document.getElementById('startTimerBtn').innerText = 'Start Rest';
+            document.getElementById('startTimerBtn').classList.replace('bg-amber-400', 'bg-lime');
+        }
+
+        function resetTimer() {
+            stopTimer();
+            timerRemainingSeconds = timerTotalSeconds;
+            document.getElementById('timerStatus').innerText = 'Ready';
+            updateTimerDisplay();
+        }
+
+        function playTimerBeep() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = 880; // A5 pitch
+                gain.gain.value = 0.2;
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.5);
+            } catch (e) {
+                console.log("Audio play blocked", e);
+            }
+        }
+
+        // ================= API MODAL & EXPORT =================
+        function openApiModal() {
+            document.getElementById('apiModal').classList.remove('hidden');
+        }
+
+        function closeApiModal() {
+            document.getElementById('apiModal').classList.add('hidden');
+        }
+
+        function saveApiKey() {
+            appState.apiKey = document.getElementById('inputApiKey').value.trim();
+            saveState();
+            closeApiModal();
+            alert('Settings saved successfully!');
+        }
+
+        function exportPlanJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `FitPulse_Workout_Plan.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+    </script>
+</body>
+</html>
